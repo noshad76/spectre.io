@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { CreateRoomSchema, JoinRoomInput } from "@spectre/shared/schemas";
+import { CreateRoomSchema, GetRoomParams } from "@spectre/shared/schemas";
 import * as roomsService from "../services/rooms.service";
 
 import {
@@ -23,7 +23,7 @@ export async function createRoom(
 }
 
 export async function getRoom(
-  req: Request<JoinRoomInput>,
+  req: Request<GetRoomParams>,
   res: Response<GetRoomResponse | ApiErrorResponse>,
   next: NextFunction,
 ) {
