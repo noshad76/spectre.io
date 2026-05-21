@@ -4,6 +4,9 @@
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "private": true,
+    "exports": {
+        "./schemas": "./src/index.ts"
+    },
     "scripts": {
         "build": "tsc",
         "dev": "tsc -w"

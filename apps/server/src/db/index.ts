@@ -1,10 +1,10 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Client } from "pg";
-import * as schema from "./schema";
+import * as schema from "@spectre/shared/schemas";
 import "dotenv/config";
 import { env } from "../env";
 
-if (env.DATABASE_URL) {
+if (!env.DATABASE_URL) {
   throw new Error("DATABASE_URL is not defined in environment variables");
 }
 
@@ -12,7 +12,8 @@ const client = new Client({
   connectionString: env.DATABASE_URL,
 });
 
-client.connect()
+client
+  .connect()
   .then(() => console.log("Successfully connected to PostgreSQL database."))
   .catch((err) => console.error("Database connection error:", err));
 

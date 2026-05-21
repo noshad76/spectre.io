@@ -11,9 +11,6 @@
     "db:generate": "npx drizzle-kit generate",
     "db:migrate": "npm run db:generate && npx drizzle-kit migrate"
   },
-  "include": [
-    "src"
-  ],
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -27,7 +24,6 @@
     "helmet": "^8.1.0",
     "pg": "^8.21.0"
   },
-  "extends": "../../tsconfig.base.json",
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",

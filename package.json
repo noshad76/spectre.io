@@ -6,8 +6,8 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run dev -w web\" \"npm run dev -w server\"",
-    "build": "npm run build -w web && npm run build -w server",
+    "dev": "concurrently \"npm run dev -w @spectre/shared\" \"npm run dev -w web\" \"npm run dev -w server\"",
+    "build": "npm run build -w @spectre/shared && npm run build -w web && npm run build -w server",
     "lint": "biome check .",
     "format": "biome format . --write"
   },

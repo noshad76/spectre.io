@@ -1,3 +1,4 @@
+import { integer } from "drizzle-orm/pg-core";
 import { pgTable, uuid, text, timestamp, index } from "drizzle-orm/pg-core";
 
 export const rooms = pgTable("rooms", {
@@ -6,6 +7,9 @@ export const rooms = pgTable("rooms", {
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
+  ttlHours: integer("ttl_hours").notNull(),
+
+  expireAt: timestamp("expire_at", { withTimezone: true }).notNull(),
 });
 
 export const messages = pgTable(
