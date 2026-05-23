@@ -6,8 +6,7 @@ export async function createRoom(
   name: string,
   ttlHours: number,
 ): Promise<Room> {
-  // const expireAt = new Date(Date.now() + ttlHours * 60 * 60 * 1000);
-  const expireAt = new Date(Date.now() + 30 * 1000);
+  const expireAt = new Date(Date.now() + ttlHours * 60 * 60 * 1000);
 
   const [room]: Room[] = await db
     .insert(rooms)
