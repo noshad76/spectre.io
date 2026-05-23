@@ -7,7 +7,7 @@ const app = createApp();
 
 const httpServer = createServer(app);
 
-createSocketServer(httpServer);
+export const io = createSocketServer(httpServer);
 
 httpServer.listen(env.PORT, () => {
   console.log(`🚀 Server running on port ${env.PORT}`);
