@@ -9,7 +9,7 @@ export const SendMessageSchema = z.object({
 
   content: z.string().min(1).max(2000),
 
-  clientId: z.string().uuid(),
+  clientId: z.string(),
 });
 
 export type SendMessageInput = z.infer<typeof SendMessageSchema>;

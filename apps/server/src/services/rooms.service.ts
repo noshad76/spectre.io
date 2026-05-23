@@ -21,13 +21,14 @@ export async function createRoom(
 }
 
 export async function getRoomById(roomId: string): Promise<Room | null> {
-  const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId));
+  const [room] = await db
+    .select()
+    .from(rooms)
+    .where(eq(rooms.id, roomId))
+    .limit(1);
 
-  if (!room) return null;
-
-  if (room.expireAt < new Date()) {
-    return null;
-  }
-
-  return room;
+  return room ?? null;
+}
+export function isRoomExpired(room: Room): boolean {
+  return new Date() >= new Date(room.expireAt);
 }

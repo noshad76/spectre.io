@@ -34,6 +34,9 @@ export async function getRoom(
     if (!room) {
       return res.status(404).json({ error: "Room not found" });
     }
+    if (roomsService.isRoomExpired(room)) {
+      return res.status(410).json({ error: "ROOM_EXPIRED" });
+    }
 
     return res.json(room);
   } catch (err) {

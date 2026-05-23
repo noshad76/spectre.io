@@ -33,7 +33,12 @@ export interface ServerToClientEvents {
   room_closed: (data: { roomId: string; reason: "EXPIRED" }) => void;
 
   error_event: (data: {
-    code: "ROOM_NOT_FOUND" | "ROOM_EXPIRED" | "MESSAGE_INVALID" | "RATE_LIMIT";
+    code:
+      | "ROOM_NOT_FOUND"
+      | "ROOM_EXPIRED"
+      | "MESSAGE_INVALID"
+      | "RATE_LIMIT"
+      | "JOIN_INVALID_PAYLOAD";
   }) => void;
 }
 
