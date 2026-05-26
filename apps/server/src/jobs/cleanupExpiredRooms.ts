@@ -1,25 +1,22 @@
+import { redis } from "../db/redis";
 import { db } from "../db";
 import { rooms } from "@spectre/shared/schemas";
-import { lt } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
 import { io } from "../index";
+
 export async function cleanupExpiredRooms() {
-  const now = new Date();
+  const now = Date.now();
 
-  const expiredRooms = await db
-    .select()
-    .from(rooms)
-    .where(lt(rooms.expireAt, now));
+  const expiredRoomIds = await redis.zrangebyscore("room_expirations", 0, now);
 
-  if (expiredRooms.length > 0) {
-    for (const room of expiredRooms) {
-      io.to(room.id).emit("room_closed", {
-        roomId: room.id,
-        reason: "EXPIRED",
-      });
-
-      io.in(room.id).disconnectSockets();
+  if (expiredRoomIds.length > 0) {
+    for (const roomId of expiredRoomIds) {
+      io.to(roomId).emit("room_closed", { roomId, reason: "EXPIRED" });
+      io.in(roomId).disconnectSockets();
     }
 
-    await db.delete(rooms).where(lt(rooms.expireAt, now));
+    await db.delete(rooms).where(inArray(rooms.id, expiredRoomIds));
+
+    await redis.zremrangebyscore("room_expirations", 0, now);
   }
 }

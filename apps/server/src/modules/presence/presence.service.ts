@@ -1,27 +1,27 @@
 import { presenceStore } from "./presenceStore";
 
 export class PresenceService {
-  add(
+  async add(
     roomId: string,
     userId: string,
     username: string,
-    socketId: string
-  ): number {
-    presenceStore.addUser(roomId, userId, username, socketId);
-    return presenceStore.getCount(roomId);
+    socketId: string,
+  ): Promise<number> {
+    await presenceStore.addUser(roomId, userId, username, socketId);
+    return await presenceStore.getCount(roomId);
   }
 
-  remove(
+  async remove(
     roomId: string,
     userId: string,
-    socketId: string
-  ): number {
-    presenceStore.removeUser(roomId, userId, socketId);
-    return presenceStore.getCount(roomId);
+    socketId: string,
+  ): Promise<number> {
+    await presenceStore.removeUser(roomId, userId, socketId);
+    return await presenceStore.getCount(roomId);
   }
 
-  count(roomId: string): number {
-    return presenceStore.getCount(roomId);
+ async count(roomId: string): Promise<number> {
+    return await presenceStore.getCount(roomId);
   }
 }
 

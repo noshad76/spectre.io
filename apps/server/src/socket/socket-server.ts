@@ -6,6 +6,7 @@ import {
   type ClientToServerEvents,
   SendMessageSchema,
 } from "@spectre/shared/schemas";
+import { createAdapter } from "@socket.io/redis-adapter";
 
 import { presenceService } from "../modules/presence/presence.service";
 import { socketToUser } from "./connections";
@@ -14,8 +15,11 @@ import * as roomsService from "../services/rooms.service";
 import * as messageService from "../services/message.service";
 import { rateLimitService } from "./rate-limit";
 import { typingService } from "../modules/typing/typing.service";
+import { redis } from "../db/redis";
 
 export function createSocketServer(httpServer: any) {
+  const pubClient = redis;
+  const subClient = redis.duplicate();
   const io = new Server<ClientToServerEvents, ServerToClientEvents>(
     httpServer,
     {
@@ -26,6 +30,7 @@ export function createSocketServer(httpServer: any) {
       transports: ["polling", "websocket"],
     },
   );
+  io.adapter(createAdapter(pubClient, subClient));
 
   io.on("connection", (socket) => {
     socket.on("join_room", async (payload) => {
@@ -48,7 +53,13 @@ export function createSocketServer(httpServer: any) {
         return;
       }
 
-      const count = presenceService.add(roomId, userId, username, socket.id);
+      const count = await presenceService.add(
+        roomId,
+        userId,
+        username,
+        socket.id,
+      );
+      (socket as any).userData = { roomId, userId };
 
       socketToUser.set(socket.id, { roomId, userId });
 
@@ -87,7 +98,7 @@ export function createSocketServer(httpServer: any) {
         return;
       }
 
-      const limited = rateLimitService.check(socket.id);
+      const limited = await rateLimitService.check(socket.id);
       if (limited) {
         socket.emit("error_event", { code: "RATE_LIMIT" });
         return;
@@ -107,10 +118,9 @@ export function createSocketServer(httpServer: any) {
 
       socket.to(roomId).emit("new_message", message);
     });
-    socket.on("typing_start", (payload) => {
+    socket.on("typing_start", async (payload) => {
       const { roomId, userId, username } = payload;
-      typingService.add(roomId, userId, socket.id);
-      console.log("Typing Start Received:", payload);
+      await typingService.add(roomId, userId, socket.id);
 
       socket.to(roomId).emit("typing_update", {
         userId,
@@ -120,11 +130,11 @@ export function createSocketServer(httpServer: any) {
     });
 
     // ۴. پایان تایپ با تایید لایه Service
-    socket.on("typing_stop", (payload) => {
+    socket.on("typing_stop", async (payload) => {
       console.log("Typing stop Received:", payload);
 
       const { roomId, userId } = payload;
-      const isCompletelyStopped = typingService.remove(
+      const isCompletelyStopped = await typingService.remove(
         roomId,
         userId,
         socket.id,
@@ -150,16 +160,16 @@ export function createSocketServer(httpServer: any) {
       socket.emit("message_history", page);
     });
 
-    socket.on("disconnect", () => {
-      const info = socketToUser.get(socket.id);
+    socket.on("disconnect", async () => {
+      const info = (socket as any).userData || socketToUser.get(socket.id);
       if (!info) return;
 
       const { roomId, userId } = info;
 
-      const count = presenceService.remove(roomId, userId, socket.id);
+      const count = await presenceService.remove(roomId, userId, socket.id);
       io.to(roomId).emit("user_count_update", { roomId, count });
 
-      const isCompletelyStopped = typingService.remove(
+      const isCompletelyStopped = await typingService.remove(
         roomId,
         userId,
         socket.id,

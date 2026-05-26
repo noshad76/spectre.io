@@ -1,63 +1,56 @@
+import { redis } from "../../db/redis";
+
 export interface PresenceStore {
   addUser: (
     roomId: string,
     userId: string,
     username: string,
-    socketId: string
+    socketId: string,
   ) => void;
 
-  removeUser: (
+  removeUser: (roomId: string, userId: string, socketId: string) => void;
+
+  getCount: (roomId: string) => Promise<number>;
+}
+
+// type PresenceEntry = {
+//   username: string;
+//   socketIds: Set<string>;
+// };
+
+class RedisPresenceStore implements PresenceStore {
+  private getKey(roomId: string) {
+    return `presence:room:${roomId}`;
+  }
+  private getUserKey(roomId: string, userId: string) {
+    return `presence:room:${roomId}:user:${userId}`;
+  }
+
+  async addUser(
     roomId: string,
     userId: string,
-    socketId: string
-  ) => void;
+    username: string,
+    socketId: string,
+  ) {
+    const userKey = this.getUserKey(roomId, userId);
+    await redis.sadd(userKey, socketId);
+    await redis.sadd(this.getKey(roomId), userId);
+    await redis.expire(this.getKey(roomId), 86400);
+  }
 
-  getCount: (roomId: string) => number;
-}
-
-type PresenceEntry = {
-  username: string;
-  socketIds: Set<string>;
-};
-
-class InMemoryPresenceStore implements PresenceStore {
-  private rooms = new Map<string, Map<string, PresenceEntry>>();
-
-  addUser(roomId: string, userId: string, username: string, socketId: string) {
-    if (!this.rooms.has(roomId)) {
-      this.rooms.set(roomId, new Map());
-    }
-
-    const room = this.rooms.get(roomId)!;
-
-    if (!room.has(userId)) {
-      room.set(userId, { username, socketIds: new Set([socketId]) });
-    } else {
-      room.get(userId)!.socketIds.add(socketId);
+  async removeUser(roomId: string, userId: string, socketId: string) {
+    const userKey = this.getUserKey(roomId, userId);
+    await redis.srem(userKey, socketId);
+    const remainingSockets = await redis.scard(userKey);
+    if (remainingSockets === 0) {
+      await redis.srem(this.getKey(roomId), userId);
+      await redis.del(userKey);
     }
   }
 
-  removeUser(roomId: string, userId: string, socketId: string) {
-    const room = this.rooms.get(roomId);
-    if (!room) return;
-
-    const entry = room.get(userId);
-    if (!entry) return;
-
-    entry.socketIds.delete(socketId);
-
-    if (entry.socketIds.size === 0) {
-      room.delete(userId);
-    }
-
-    if (room.size === 0) {
-      this.rooms.delete(roomId);
-    }
-  }
-
-  getCount(roomId: string) {
-    return this.rooms.get(roomId)?.size ?? 0;
+  async getCount(roomId: string): Promise<number> {
+    return await redis.scard(this.getKey(roomId));
   }
 }
 
-export const presenceStore = new InMemoryPresenceStore();
+export const presenceStore = new RedisPresenceStore();

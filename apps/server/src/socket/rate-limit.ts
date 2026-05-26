@@ -1,20 +1,16 @@
-const LIMIT = 2; // 2 msg / second
-const INTERVAL = 1000;
+import { redis } from "../db/redis";
 
-const bucket = new Map<string, number[]>();
+const LIMIT = 2;
 
 export const rateLimitService = {
-  check(socketId: string) {
-    const now = Date.now();
-    const timestamps = bucket.get(socketId) ?? [];
+  async check(socketId: string): Promise<boolean> {
+    const key = `ratelimit:${socketId}`;
+    const current = await redis.incr(key);
 
-    const recent = timestamps.filter((t) => now - t < INTERVAL);
+    if (current === 1) {
+      await redis.expire(key, 1);
+    }
 
-    if (recent.length >= LIMIT) return true;
-
-    recent.push(now);
-    bucket.set(socketId, recent);
-
-    return false;
+    return current > LIMIT;
   },
 };

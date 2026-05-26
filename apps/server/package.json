@@ -16,6 +16,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@socket.io/redis-adapter": "^8.3.0",
     "@spectre/shared": "^1.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
@@ -23,9 +24,12 @@
     "express": "^5.2.1",
     "helmet": "^8.1.0",
     "install": "^0.13.0",
+    "ioredis": "^5.10.1",
     "npm": "^11.15.0",
     "pg": "^8.21.0",
-    "socket.io": "^4.8.3"
+    "redis": "^3.1.2",
+    "socket.io": "^4.8.3",
+    "socket.io-redis": "^5.4.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",

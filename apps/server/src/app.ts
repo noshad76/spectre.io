@@ -22,12 +22,9 @@ export const createApp = (): Application => {
   app.use(errorHandler);
   if (!cleanupScheduled) {
     cleanupScheduled = true;
-    setInterval(
-      () => {
-        cleanupExpiredRooms().catch(console.error);
-      },
-      1000 * 60 * 1,
-    );
+    setInterval(() => {
+      cleanupExpiredRooms().catch(console.error);
+    }, 5000);
   }
 
   return app;

@@ -1,51 +1,41 @@
+import { redis } from "../../db/redis";
 
 export interface TypingStore {
   addTyper: (roomId: string, userId: string, socketId: string) => void;
-  removeTyper: (roomId: string, userId: string, socketId: string) => boolean;
-  isUserTyping: (roomId: string, userId: string) => boolean;
+  removeTyper: (
+    roomId: string,
+    userId: string,
+    socketId: string,
+  ) => Promise<boolean>;
+  isUserTyping: (roomId: string, userId: string) => Promise<boolean>;
 }
 
-class InMemoryTypingStore implements TypingStore {
-  private rooms = new Map<string, Map<string, Set<string>>>();
-
-  addTyper(roomId: string, userId: string, socketId: string) {
-    if (!this.rooms.has(roomId)) {
-      this.rooms.set(roomId, new Map());
-    }
-
-    const room = this.rooms.get(roomId)!;
-
-    if (!room.has(userId)) {
-      room.set(userId, new Set([socketId]));
-    } else {
-      room.get(userId)!.add(socketId);
-    }
+class RedisTypingStore implements TypingStore {
+  private getKey(roomId: string) {
+    return `typing:room:${roomId}`;
   }
 
-
-  removeTyper(roomId: string, userId: string, socketId: string): boolean {
-    const room = this.rooms.get(roomId);
-    if (!room) return false;
-
-    const socketIds = room.get(userId);
-    if (!socketIds) return false;
-
-    socketIds.delete(socketId);
-
-    if (socketIds.size === 0) {
-      room.delete(userId);
-      if (room.size === 0) {
-        this.rooms.delete(roomId);
-      }
-      return true; 
-    }
-
-    return false; 
+  async addTyper(roomId: string, userId: string, socketId: string) {
+    const key = this.getKey(roomId);
+    await redis.hset(key, userId, socketId);
+    await redis.expire(key, 10);
   }
 
-  isUserTyping(roomId: string, userId: string): boolean {
-    return this.rooms.get(roomId)?.has(userId) ?? false;
+  async removeTyper(
+    roomId: string,
+    userId: string,
+    socketId: string,
+  ): Promise<boolean> {
+    const key = this.getKey(roomId);
+    await redis.hdel(key, userId);
+
+    const remaining = await redis.hlen(key);
+    return remaining === 0;
+  }
+
+  async isUserTyping(roomId: string, userId: string): Promise<boolean> {
+    return (await redis.hexists(this.getKey(roomId), userId)) === 1;
   }
 }
 
-export const typingStore = new InMemoryTypingStore();
+export const typingStore = new RedisTypingStore();

@@ -1,16 +1,20 @@
 import { typingStore } from "./typingStore";
 
 export class TypingService {
-  add(roomId: string, userId: string, socketId: string) {
-    typingStore.addTyper(roomId, userId, socketId);
+ async add(roomId: string, userId: string, socketId: string) {
+   await typingStore.addTyper(roomId, userId, socketId);
   }
 
-  remove(roomId: string, userId: string, socketId: string): boolean {
-    return typingStore.removeTyper(roomId, userId, socketId);
+  async remove(
+    roomId: string,
+    userId: string,
+    socketId: string,
+  ): Promise<boolean> {
+    return await typingStore.removeTyper(roomId, userId, socketId);
   }
 
-  isTyping(roomId: string, userId: string): boolean {
-    return typingStore.isUserTyping(roomId, userId);
+  async isTyping(roomId: string, userId: string): Promise<boolean> {
+    return await typingStore.isUserTyping(roomId, userId);
   }
 }
 

@@ -1,6 +1,7 @@
 import { Room, rooms } from "@spectre/shared/schemas";
 import { db } from "../db";
 import { eq } from "drizzle-orm";
+import { redis } from "../db/redis";
 
 export async function createRoom(
   name: string,
@@ -16,6 +17,7 @@ export async function createRoom(
       expireAt,
     })
     .returning();
+  await redis.zadd("room_expirations", expireAt.getTime(), room.id);
 
   return room;
 }
