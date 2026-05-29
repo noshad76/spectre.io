@@ -1,4 +1,5 @@
 <div align="center">
+  <img src="apps/web/public/appIcon.png" alt="spectre.io icon" width="120" height="120" />
   <h1>spectre.io</h1>
   <p><strong>Realtime room-based chat with self-destructing rooms, Socket.IO transport, PostgreSQL persistence, and an aggressively optimistic Next.js client.</strong></p>
 
